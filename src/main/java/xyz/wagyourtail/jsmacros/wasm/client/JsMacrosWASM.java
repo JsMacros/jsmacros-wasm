@@ -27,7 +27,7 @@ public class JsMacrosWASM implements ModInitializer {
     }
 
     public static void loadWasm() {
-        byte[] wasmBytes = new byte[0];
+        byte[] wasmBytes;
         try {
             wasmBytes = IOUtils.toByteArray(JsMacrosWASM.class.getResourceAsStream("/wasm/wasm_load.wasm"));
         } catch (IOException e) {

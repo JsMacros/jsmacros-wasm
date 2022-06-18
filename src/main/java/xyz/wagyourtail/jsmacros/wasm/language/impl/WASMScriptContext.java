@@ -1,7 +1,7 @@
 package xyz.wagyourtail.jsmacros.wasm.language.impl;
 
-import io.github.kawamuray.wasmtime.*;
 import io.github.kawamuray.wasmtime.Module;
+import io.github.kawamuray.wasmtime.*;
 import io.github.kawamuray.wasmtime.wasi.WasiCtx;
 import io.github.kawamuray.wasmtime.wasi.WasiCtxBuilder;
 import xyz.wagyourtail.jsmacros.core.event.BaseEvent;
@@ -9,7 +9,6 @@ import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
 
 import java.io.Closeable;
 import java.io.File;
-import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +37,8 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
         public final Store<Void> store;
         public final Module module;
 
+
+        private Func main;
         protected List<Func> exports = new ArrayList<>();
         public List<Object> javaObjects = new ArrayList<>();
 
@@ -61,9 +62,17 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
         public void runMain() {
             linker.module(store, "", module);
             memory = linker.get(store, "", "memory").get().memory();
-            try (Func main = linker.get(store, "", "main").get().func()) {
+            synchronized (this) {
+                main = linker.get(store, "", "main").get().func();
+            }
+            try {
                 WasmFunctions.Consumer0 main_func = WasmFunctions.consumer(store, main);
                 main_func.accept();
+            } finally {
+                synchronized (this) {
+                    main.close();
+                    main = null;
+                }
             }
         }
 
@@ -71,6 +80,11 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
         public void close() {
             for (Func export : exports) {
                 export.close();
+            }
+            synchronized (this) {
+                if (main != null) {
+                    main.close();
+                }
             }
             store.close();
             memory.close();
