@@ -23,7 +23,7 @@ these would be `getBlock3`, `getBlock1_1` and `getBlock1_2`
 
 ### so what the f is a jPtr?
 
-a jPtr is a pointer to a java object, to actually use it, see the
+a jPtr is an i32 pointer to a java object, to actually use it, see the
 `Java` module, which provides manipulation and visibility for java objects.
 
 ## Java module
