@@ -11,6 +11,7 @@ import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMLanguageDefinition;
 import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -34,7 +35,7 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
      * @param arr
      * @param maxLength
      */
-    public void convertJavaString(int jPtr, int arr, int maxLength) {
+    public void jStringToC(int jPtr, int arr, int maxLength) {
         ByteBuffer buff = ctx.getContext().getMemory().buffer(ctx.getContext().store);
         byte[] s = ctx.getContext().javaObjects.get(jPtr).toString().getBytes(StandardCharsets.UTF_8);
         if (s.length >= maxLength) {
@@ -48,24 +49,24 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
         buff.put(arr + i, (byte) 0);
     }
 
-    public int toJString(int ptr) {
+    public int cStringToJ(int ptr) {
         String s = WasmHelper.fromWasmPtr(ctx.getContext(), ptr);
         return WasmHelper.pushObject(ctx.getContext(), s);
     }
 
-    public int convertJavaPrimitiveInt(int jPtr) {
+    public int getJInt(int jPtr) {
         return (int) ctx.getContext().javaObjects.get(jPtr);
     }
 
-    public long convertJavaPrimitiveLong(int jPtr) {
+    public long getJLong(int jPtr) {
         return (long) ctx.getContext().javaObjects.get(jPtr);
     }
 
-    public float convertJavaPrimitiveFloat(int jPtr) {
+    public float getJFloat(int jPtr) {
         return (float) ctx.getContext().javaObjects.get(jPtr);
     }
 
-    public double convertJavaPrimitiveDouble(int jPtr) {
+    public double getJDouble(int jPtr) {
         return (double) ctx.getContext().javaObjects.get(jPtr);
     }
 
@@ -74,7 +75,7 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
      * @param jPtr
      * @return jPtr of a string
      */
-    public int getJavaType(int jPtr) {
+    public int getType(int jPtr) {
         return WasmHelper.pushObject(ctx.getContext(), ctx.getContext().javaObjects.get(jPtr).getClass().getCanonicalName());
     }
 
@@ -89,7 +90,7 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
      * @throws ClassNotFoundException
      * @throws NoSuchMethodException
      */
-    public int invokeJavaMethod(int jPtr, String methodSig, int argPtrs, int argCount) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public int invokeMethod(int jPtr, String methodSig, int argPtrs, int argCount) throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Object methodClass = ctx.getContext().javaObjects.get(jPtr);
         MethodSigParts ms = mapMethodSig(methodSig);
         Method method = methodClass.getClass().getMethod(ms.name, ms.params);
@@ -138,11 +139,17 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
         return -1;
     }
 
+    public int getField(int jPtr, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+        Object obj = ctx.getContext().javaObjects.get(jPtr);
+        Field field = obj.getClass().getField(fieldName);
+        return WasmHelper.pushObject(ctx.getContext(), field.get(obj));
+    }
+
     /**
      *
      * @param jPtr
      */
-    public void freeJavaObject(int jPtr) {
+    public void free(int jPtr) {
         WasmHelper.freeObject(ctx.getContext(), jPtr);
     }
 

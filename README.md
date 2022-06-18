@@ -28,24 +28,34 @@ a jPtr is a pointer to a java object, to actually use it, see the
 
 ## Java module
 
-### convertJavaString(jPtr, offset, maxLength) -> void
+### jStringToC(jPtr, arr, maxLength) -> void
 
 converts a java string to a c-string, you must provide a ptr for an array to `offset`
 the array length is required to be exact for a c-string, meaning you must include room for the null terminator.
 
-### convertJavaPrimitiveInt(jPtr) -> i32
+### cStringToJ(ptr) -> jPtr
 
-### convertJavaPrimitiveLong(jPtr) -> i64
+converts a c-string to a java string
 
-### convertJavaPrimitiveFloat(jPtr) -> f32
+### getJInt(jPtr) -> i32
 
-### convertJavaPrimitiveDouble(jPtr) -> f64
+### getJLong(jPtr) -> i64
 
-### getJavaType(jPtr) -> jPtr
+### getJFloat(jPtr) -> f32
 
-prints the canonical class name of the java object at the ptr to a new jPtr that 
+### getJDouble(jPtr) -> f64
+
+### getType(jPtr) -> jPtr
+
+prints the canonical class name of the java object at the ptr to a new jPtr that
 contains a java string.
 
-### freeJavaObject(jPtr) -> void
+### invokeMethod(jPtr, methodSig, argPtrs, argCount) -> jPtr
+
+invokes java method, requires signature of the method, argPtrs is array of pointers/jPtrs.
+
+### getField(jPtr, fieldName) -> jPtr
+
+### free(jPtr) -> void
 
 -_-
