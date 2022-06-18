@@ -2,10 +2,12 @@ package xyz.wagyourtail.jsmacros.wasm.client;
 
 import net.fabricmc.api.ModInitializer;
 import org.apache.commons.io.IOUtils;
-import org.wasmer.Instance;
+import xyz.wagyourtail.jsmacros.client.JsMacros;
+import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMLanguageDefinition;
+import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
+import xyz.wagyourtail.jsmacros.wasm.library.impl.FJava;
 
 import java.io.IOException;
-import java.util.function.Consumer;
 
 public class JsMacrosWASM implements ModInitializer {
     @Override
@@ -15,6 +17,11 @@ public class JsMacrosWASM implements ModInitializer {
 //        } catch (IllegalAccessException | InstantiationException e) {
 //            throw new RuntimeException(e);
 //        }
+
+        JsMacros.core.libraryRegistry.addLibrary(FJava.class);
+        JsMacros.core.addLanguage(WASMLanguageDefinition.WASM);
+        JsMacros.core.addLanguage(WASMLanguageDefinition.WAT);
+
         Thread t = new Thread(JsMacrosWASM::loadWasm);
         t.start();
     }
@@ -26,9 +33,12 @@ public class JsMacrosWASM implements ModInitializer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Instance instance = new Instance(wasmBytes);
-        instance.exports.getFunction("main").apply((Consumer<String>)JsMacrosWASM::print);
-        instance.close();
+        try (WASMScriptContext.WasmInstance i = new WASMScriptContext.WasmInstance(wasmBytes, false)) {
+            WasmHelper.registerMethod(i, "env", "print", null, JsMacrosWASM.class.getMethod("print", String.class));
+            i.runMain();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void print(String s) {
@@ -36,9 +46,6 @@ public class JsMacrosWASM implements ModInitializer {
     }
 
     public static void main(String[] args) {
-        Object[] test = new Object[][] {};
-        Object[][] test2 = (Object[][]) test;
-        System.out.println(test2.length);
         loadWasm();
     }
 
