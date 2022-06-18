@@ -9,8 +9,7 @@ import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
 
 import java.io.Closeable;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmInstance> {
 
@@ -41,6 +40,8 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
         private Func main;
         protected List<Func> exports = new ArrayList<>();
         public List<Object> javaObjects = new ArrayList<>();
+
+        public LinkedList<Integer> freeObjects = new LinkedList<>();
 
 
         public WasmInstance(byte[] bytes, boolean watBytes) {

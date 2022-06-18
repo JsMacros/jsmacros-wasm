@@ -13,15 +13,14 @@ import java.util.*;
 public class WasmHelper {
 
     public static synchronized int pushObject(WASMScriptContext.WasmInstance in, Object o) {
-        for (int i = 0; i < in.javaObjects.size(); i++) {
-            if (in.javaObjects.get(i) == null) {
-                in.javaObjects.set(i, o);
-                return i;
-            }
+        if (in.freeObjects.isEmpty()) {
+            in.javaObjects.add(o);
+            return in.javaObjects.size() - 1;
+        } else {
+            int i = in.freeObjects.pop();
+            in.javaObjects.set(i, o);
+            return i;
         }
-        // else
-        in.javaObjects.add(o);
-        return in.javaObjects.size() - 1;
     }
 
     public static synchronized int readIntFromMemory(WASMScriptContext.WasmInstance in, int ptr) {
@@ -42,6 +41,7 @@ public class WasmHelper {
 
     public static synchronized void freeObject(WASMScriptContext.WasmInstance in, int jPtr) {
         in.javaObjects.set(jPtr, null);
+        in.freeObjects.add(jPtr);
     }
 
     public static boolean isNativeWasmType(Class<?> clz) {
