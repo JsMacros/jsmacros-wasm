@@ -1,7 +1,6 @@
 package xyz.wagyourtail.jsmacros.wasm.library.impl;
 
 import io.github.kawamuray.wasmtime.WasmValType;
-import xyz.wagyourtail.jsmacros.core.classes.WrappedClassInstance;
 import xyz.wagyourtail.jsmacros.core.language.BaseLanguage;
 import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
 import xyz.wagyourtail.jsmacros.core.library.Library;
@@ -101,8 +100,6 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
             Class<?> param = params[i];
             if (WasmHelper.isNativeWasmType(param)) {
                 paramTypes[i] = WasmHelper.getNativeType(param);
-            } else if (WasmHelper.canConvertToNativeType(param)) {
-                paramTypes[i] = WasmValType.I32;
             } else {
                 paramTypes[i] = WasmValType.I32;
             }
@@ -145,6 +142,12 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
         return WasmHelper.pushObject(ctx.getContext(), field.get(obj));
     }
 
+    public void putField(int obj_jPtr, String fieldName, int jPtr) throws NoSuchFieldException, IllegalAccessException {
+        Object obj = ctx.getContext().javaObjects.get(obj_jPtr);
+        Field field = obj.getClass().getField(fieldName);
+        field.set(obj, ctx.getContext().javaObjects.get(jPtr));
+    }
+
     /**
      *
      * @param jPtr
@@ -153,6 +156,10 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
         WasmHelper.freeObject(ctx.getContext(), jPtr);
     }
 
+
+    public int duplicate(int jPtr) {
+        return WasmHelper.pushObject(ctx.getContext(), ctx.getContext().javaObjects.get(jPtr));
+    }
 
     private final Pattern sigPart = Pattern.compile("[ZBCSIJFDV]|L(.+?);");
 

@@ -6,9 +6,11 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.helpers.NOPLogger;
 import sun.misc.Unsafe;
 import xyz.wagyourtail.jsmacros.client.JsMacros;
+import xyz.wagyourtail.jsmacros.wasm.config.WASMConfig;
 import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMLanguageDefinition;
 import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
 import xyz.wagyourtail.jsmacros.wasm.library.impl.FJava;
+import xyz.wagyourtail.jsmacros.wasm.library.impl.FWrapper;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -16,13 +18,14 @@ import java.lang.reflect.Field;
 public class JsMacrosWASM implements ModInitializer {
     @Override
     public void onInitialize() {
-//        try {
-//            JsMacros.core.config.addOptions("jep", JEPConfig.class);
-//        } catch (IllegalAccessException | InstantiationException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            JsMacros.core.config.addOptions("wasm", WASMConfig.class);
+        } catch (IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException(e);
+        }
 
         JsMacros.core.libraryRegistry.addLibrary(FJava.class);
+        JsMacros.core.libraryRegistry.addLibrary(FWrapper.class);
         JsMacros.core.addLanguage(WASMLanguageDefinition.WASM);
         JsMacros.core.addLanguage(WASMLanguageDefinition.WAT);
 

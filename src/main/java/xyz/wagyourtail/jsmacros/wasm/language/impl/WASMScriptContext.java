@@ -6,6 +6,7 @@ import io.github.kawamuray.wasmtime.wasi.WasiCtx;
 import io.github.kawamuray.wasmtime.wasi.WasiCtxBuilder;
 import xyz.wagyourtail.jsmacros.core.event.BaseEvent;
 import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
+import xyz.wagyourtail.jsmacros.wasm.client.WasmHelper;
 
 import java.io.Closeable;
 import java.io.File;
@@ -60,19 +61,25 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
             return memory;
         }
 
-        public void runMain() {
+        public void runMain(Object... args) {
             linker.module(store, "", module);
             memory = linker.get(store, "", "memory").get().memory();
             synchronized (this) {
                 main = linker.get(store, "", "main").get().func();
             }
+            Val[] vals = new Val[args.length];
+            for (int i = 0; i < args.length; i++) {
+                vals[i] = Val.fromI32(WasmHelper.pushObject(this, args[i]));
+            }
             try {
-                WasmFunctions.Consumer0 main_func = WasmFunctions.consumer(store, main);
-                main_func.accept();
+                main.call(store, vals);
             } finally {
                 synchronized (this) {
                     main.close();
                     main = null;
+                }
+                for (int i = 0; i < args.length; i++) {
+                    WasmHelper.freeObject(this, vals[i].i32());
                 }
             }
         }

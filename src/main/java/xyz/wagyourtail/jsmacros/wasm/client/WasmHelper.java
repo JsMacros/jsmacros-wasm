@@ -48,7 +48,7 @@ public class WasmHelper {
         return clz == void.class || clz == int.class || clz == Integer.class || clz == long.class || clz == Long.class || clz == float.class || clz == Float.class || clz == double.class || clz == Double.class;
     }
 
-    public static WasmValType<?> getNativeType(Class<?> clz) {
+    public static WasmValType getNativeType(Class<?> clz) {
         if (clz == int.class || clz == Integer.class) {
             return WasmValType.I32;
         } else if (clz == long.class || clz == Long.class) {
@@ -79,10 +79,7 @@ public class WasmHelper {
         return clz == boolean.class || clz == Boolean.class || clz == byte.class || clz == Byte.class || clz == char.class || clz == Character.class || clz == short.class || clz == Short.class;
     }
 
-    public static Number convertToNativeType(Object n) {
-        if (isNativeWasmType(n.getClass())) {
-            return (Number) n;
-        }
+    public static Integer convertToNativeType(Object n) {
         if (n instanceof Boolean) {
             return (Boolean) n ? 1 : 0;
         }
@@ -112,9 +109,11 @@ public class WasmHelper {
     }
 
     public static void registerLibrary(WASMScriptContext.WasmInstance in, String libraryName, Object libraryClass) {
+        WasmHelper.pushObject(in, libraryClass);
         Map<String, List<Method>> methodsByName = new HashMap<>();
         for (Method method : libraryClass.getClass().getDeclaredMethods()) {
-            if ((method.getModifiers() & Modifier.PUBLIC) != 0) {
+            // public and not synthetic
+            if ((method.getModifiers() & Modifier.PUBLIC) != 0 && (method.getModifiers() & 4096) == 0) {
                 methodsByName.computeIfAbsent(method.getName(), k -> new ArrayList<>()).add(method);
             }
         }
@@ -156,8 +155,6 @@ public class WasmHelper {
             Class<?> param = params[i];
             if (isNativeWasmType(param)) {
                 paramTypes[i] = getNativeType(param);
-            } else if (canConvertToNativeType(param)) {
-                paramTypes[i] = WasmValType.I32;
             } else {
                 paramTypes[i] = WasmValType.I32;
             }
@@ -169,8 +166,6 @@ public class WasmHelper {
             } else {
                 rt = getNativeType(rv);
             }
-        } else if (canConvertToNativeType(rv)) {
-            rt = WasmValType.I32;
         } else {
             rt = WasmValType.I32;
         }

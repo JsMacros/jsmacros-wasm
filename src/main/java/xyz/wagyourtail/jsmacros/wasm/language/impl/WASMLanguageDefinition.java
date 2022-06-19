@@ -30,7 +30,7 @@ public class WASMLanguageDefinition extends BaseLanguage<WASMScriptContext.WasmI
 
         retrieveLibs(ctx.getCtx()).forEach((k, v) -> WasmHelper.registerLibrary(instance, k, v));
 
-        instance.runMain();
+        instance.runMain(event, ctx.getCtx().getFile(), ctx);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class WASMLanguageDefinition extends BaseLanguage<WASMScriptContext.WasmI
 
         retrieveLibs(ctx.getCtx()).forEach((k, v) -> WasmHelper.registerLibrary(instance, k, v));
 
-        instance.runMain();
+        instance.runMain(event, ctx.getCtx().getFile(), ctx);
     }
 
     @Override
