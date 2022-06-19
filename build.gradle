@@ -42,6 +42,7 @@ dependencies {
 //	implementation urlFile("https://github.com/wasmerio/wasmer-java/releases/download/0.3.0/wasmer-jni-amd64-windows-0.3.0.jar", "wasmer-jni-amd64-windows", "0.3.0")
 
 	implementation "io.github.kawamuray.wasmtime:wasmtime-java:${project.wasmtime_version}"
+	include "io.github.kawamuray.wasmtime:wasmtime-java:${project.wasmtime_version}"
 
 	modImplementation "com.github.wagyourtail:jsmacros:${project.jsmacros_version}"
 }
