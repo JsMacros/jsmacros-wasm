@@ -1,4 +1,4 @@
-package xyz.wagyourtail.jsmacros.wasm.language.impl;
+package xyz.wagyourtail.jsmacros.wasmtime.language.impl;
 
 import io.github.kawamuray.wasmtime.Module;
 import io.github.kawamuray.wasmtime.*;
@@ -6,16 +6,16 @@ import io.github.kawamuray.wasmtime.wasi.WasiCtx;
 import io.github.kawamuray.wasmtime.wasi.WasiCtxBuilder;
 import xyz.wagyourtail.jsmacros.core.event.BaseEvent;
 import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
-import xyz.wagyourtail.jsmacros.wasm.client.WasmHelper;
+import xyz.wagyourtail.jsmacros.wasmtime.WasmHelper;
 
 import java.io.Closeable;
 import java.io.File;
 import java.util.*;
 
-public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmInstance> {
+public class WasmTimeScriptContext extends BaseScriptContext<WasmTimeScriptContext.WasmInstance> {
 
 
-    public WASMScriptContext(BaseEvent event, File file) {
+    public WasmTimeScriptContext(BaseEvent event, File file) {
         super(event, file);
     }
 
@@ -23,6 +23,11 @@ public class WASMScriptContext extends BaseScriptContext<WASMScriptContext.WasmI
     public synchronized void closeContext() {
         super.closeContext();
         getContext().close();
+    }
+
+    @Override
+    public boolean isMultiThreaded() {
+        return true;
     }
 
     @Override

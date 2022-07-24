@@ -1,25 +1,24 @@
-package xyz.wagyourtail.jsmacros.wasm.library.impl;
+package xyz.wagyourtail.jsmacros.wasmtime.library.impl;
 
 import io.github.kawamuray.wasmtime.Func;
 import io.github.kawamuray.wasmtime.Val;
 import io.github.kawamuray.wasmtime.WasmValType;
 import xyz.wagyourtail.jsmacros.core.Core;
 import xyz.wagyourtail.jsmacros.core.MethodWrapper;
-import xyz.wagyourtail.jsmacros.core.language.BaseLanguage;
 import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
 import xyz.wagyourtail.jsmacros.core.library.IFWrapper;
 import xyz.wagyourtail.jsmacros.core.library.Library;
 import xyz.wagyourtail.jsmacros.core.library.PerExecLanguageLibrary;
-import xyz.wagyourtail.jsmacros.wasm.client.WasmHelper;
-import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMLanguageDefinition;
-import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
+import xyz.wagyourtail.jsmacros.wasmtime.WasmHelper;
+import xyz.wagyourtail.jsmacros.wasmtime.language.impl.WasmTimeLanguageDefinition;
+import xyz.wagyourtail.jsmacros.wasmtime.language.impl.WasmTimeScriptContext;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Library(value = "JavaWrapper", languages = WASMLanguageDefinition.class)
-public class FWrapper  extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance> implements IFWrapper<String> {
-    public FWrapper(BaseScriptContext<WASMScriptContext.WasmInstance> context, Class<? extends BaseLanguage<WASMScriptContext.WasmInstance>> language) {
+@Library(value = "JavaWrapper", languages = WasmTimeLanguageDefinition.class)
+public class FWrapper  extends PerExecLanguageLibrary<WasmTimeScriptContext.WasmInstance, WasmTimeScriptContext> implements IFWrapper<String> {
+    public FWrapper(WasmTimeScriptContext context, Class<WasmTimeLanguageDefinition> language) {
         super(context, language);
     }
 
@@ -38,11 +37,11 @@ public class FWrapper  extends PerExecLanguageLibrary<WASMScriptContext.WasmInst
         ctx.getContext().close();
     }
 
-    public class WasmMethodWrapper<T, U, R> extends MethodWrapper<T, U, R, BaseScriptContext<WASMScriptContext.WasmInstance>> {
+    public class WasmMethodWrapper<T, U, R> extends MethodWrapper<T, U, R, BaseScriptContext<WasmTimeScriptContext.WasmInstance>> {
         private final String fn;
         private final boolean await;
 
-        private WasmMethodWrapper(String fn, boolean await, BaseScriptContext<WASMScriptContext.WasmInstance> ctx) {
+        private WasmMethodWrapper(String fn, boolean await, BaseScriptContext<WasmTimeScriptContext.WasmInstance> ctx) {
             super(ctx);
             this.fn = fn;
             this.await = await;
@@ -95,6 +94,11 @@ public class FWrapper  extends PerExecLanguageLibrary<WASMScriptContext.WasmInst
         }
 
         private Object internalApply(Object... args) {
+            boolean unbind = true;
+            if (ctx.getBoundThreads().contains(Thread.currentThread())) {
+                unbind = false;
+            }
+
             try {
                 ctx.bindThread(Thread.currentThread());
                 try (Func fn2 = ctx.getContext().linker.get(ctx.getContext().store, "", fn).get().func()) {
@@ -125,7 +129,7 @@ public class FWrapper  extends PerExecLanguageLibrary<WASMScriptContext.WasmInst
                 throw new RuntimeException(ex);
             } finally {
                 ctx.releaseBoundEventIfPresent(Thread.currentThread());
-                ctx.unbindThread(Thread.currentThread());
+                if (unbind) ctx.unbindThread(Thread.currentThread());
                 Core.getInstance().profile.joinedThreadStack.remove(Thread.currentThread());
             }
         }

@@ -1,8 +1,8 @@
-package xyz.wagyourtail.jsmacros.wasm.client;
+package xyz.wagyourtail.jsmacros.wasmtime;
 
 import com.google.common.collect.ImmutableSet;
 import io.github.kawamuray.wasmtime.*;
-import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
+import xyz.wagyourtail.jsmacros.wasmtime.language.impl.WasmTimeScriptContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,7 +12,7 @@ import java.util.*;
 
 public class WasmHelper {
 
-    public static synchronized int pushObject(WASMScriptContext.WasmInstance in, Object o) {
+    public static synchronized int pushObject(WasmTimeScriptContext.WasmInstance in, Object o) {
         if (in.freeObjects.isEmpty()) {
             in.javaObjects.add(o);
             return in.javaObjects.size() - 1;
@@ -23,23 +23,23 @@ public class WasmHelper {
         }
     }
 
-    public static synchronized int readIntFromMemory(WASMScriptContext.WasmInstance in, int ptr) {
+    public static synchronized int readIntFromMemory(WasmTimeScriptContext.WasmInstance in, int ptr) {
         return Integer.reverseBytes(in.getMemory().buffer(in.store).getInt(ptr));
     }
 
-    public static synchronized long readLongFromMemory(WASMScriptContext.WasmInstance in, int ptr) {
+    public static synchronized long readLongFromMemory(WasmTimeScriptContext.WasmInstance in, int ptr) {
         return Long.reverseBytes(in.getMemory().buffer(in.store).getLong(ptr));
     }
 
-    public static synchronized float readFloatFromMemory(WASMScriptContext.WasmInstance in, int ptr) {
+    public static synchronized float readFloatFromMemory(WasmTimeScriptContext.WasmInstance in, int ptr) {
         return Float.intBitsToFloat(Integer.reverseBytes(in.getMemory().buffer(in.store).getInt(ptr)));
     }
 
-    public static synchronized double readDoubleFromMemory(WASMScriptContext.WasmInstance in, int ptr) {
+    public static synchronized double readDoubleFromMemory(WasmTimeScriptContext.WasmInstance in, int ptr) {
         return Double.longBitsToDouble(Long.reverseBytes(in.getMemory().buffer(in.store).getLong(ptr)));
     }
 
-    public static synchronized void freeObject(WASMScriptContext.WasmInstance in, int jPtr) {
+    public static synchronized void freeObject(WasmTimeScriptContext.WasmInstance in, int jPtr) {
         in.javaObjects.set(jPtr, null);
         in.freeObjects.add(jPtr);
     }
@@ -62,7 +62,7 @@ public class WasmHelper {
         }
     }
 
-    public static String fromWasmPtr(WASMScriptContext.WasmInstance in, int ptr) {
+    public static String fromWasmPtr(WasmTimeScriptContext.WasmInstance in, int ptr) {
         StringBuilder sb = new StringBuilder();
         boolean not_null = true;
         ByteBuffer buff = in.getMemory().buffer(in.store);
@@ -108,7 +108,7 @@ public class WasmHelper {
         throw new RuntimeException("Cannot convert " + c.getCanonicalName() + " to native type");
     }
 
-    public static void registerLibrary(WASMScriptContext.WasmInstance in, String libraryName, Object libraryClass) {
+    public static void registerLibrary(WasmTimeScriptContext.WasmInstance in, String libraryName, Object libraryClass) {
         WasmHelper.pushObject(in, libraryClass);
         Map<String, List<Method>> methodsByName = new HashMap<>();
         for (Method method : libraryClass.getClass().getDeclaredMethods()) {
@@ -147,7 +147,7 @@ public class WasmHelper {
         }
     }
 
-    public static void registerMethod(WASMScriptContext.WasmInstance in, String libraryName, String methName, Object methodClass, Method method) {
+    public static void registerMethod(WasmTimeScriptContext.WasmInstance in, String libraryName, String methName, Object methodClass, Method method) {
         Class<?> rv = method.getReturnType();
         Class<?>[] params = method.getParameterTypes();
         WasmValType[] paramTypes = new WasmValType[params.length];

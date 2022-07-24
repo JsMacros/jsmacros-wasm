@@ -1,13 +1,11 @@
-package xyz.wagyourtail.jsmacros.wasm.library.impl;
+package xyz.wagyourtail.jsmacros.wasmtime.library.impl;
 
 import io.github.kawamuray.wasmtime.WasmValType;
-import xyz.wagyourtail.jsmacros.core.language.BaseLanguage;
-import xyz.wagyourtail.jsmacros.core.language.BaseScriptContext;
 import xyz.wagyourtail.jsmacros.core.library.Library;
 import xyz.wagyourtail.jsmacros.core.library.PerExecLanguageLibrary;
-import xyz.wagyourtail.jsmacros.wasm.client.WasmHelper;
-import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMLanguageDefinition;
-import xyz.wagyourtail.jsmacros.wasm.language.impl.WASMScriptContext;
+import xyz.wagyourtail.jsmacros.wasmtime.WasmHelper;
+import xyz.wagyourtail.jsmacros.wasmtime.language.impl.WasmTimeLanguageDefinition;
+import xyz.wagyourtail.jsmacros.wasmtime.language.impl.WasmTimeScriptContext;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -20,10 +18,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Library(value = "Java", languages = { WASMLanguageDefinition.class })
-public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance> {
+@Library(value = "Java", languages = { WasmTimeLanguageDefinition.class })
+public class FJava extends PerExecLanguageLibrary<WasmTimeScriptContext.WasmInstance, WasmTimeScriptContext> {
 
-    public FJava(BaseScriptContext<WASMScriptContext.WasmInstance> context, Class<? extends BaseLanguage<WASMScriptContext.WasmInstance>> language) {
+    public FJava(WasmTimeScriptContext context, Class<WasmTimeLanguageDefinition> language) {
         super(context, language);
     }
 
@@ -67,6 +65,42 @@ public class FJava extends PerExecLanguageLibrary<WASMScriptContext.WasmInstance
 
     public double getJDouble(int jPtr) {
         return (double) ctx.getContext().javaObjects.get(jPtr);
+    }
+
+    /**
+     * @since 1.0.1
+     * @param cint
+     * @return
+     */
+    public int cIntToJ(int cint) {
+        return WasmHelper.pushObject(ctx.getContext(), cint);
+    }
+
+    /**
+     * @since 1.0.1
+     * @param cLong
+     * @return
+     */
+    public int cLongToJ(long cLong) {
+        return WasmHelper.pushObject(ctx.getContext(), cLong);
+    }
+
+    /**
+     * @since 1.0.1
+     * @param cFloat
+     * @return
+     */
+    public int cFloatToJ(float cFloat) {
+        return WasmHelper.pushObject(ctx.getContext(), cFloat);
+    }
+
+    /**
+     * @since 1.0.1
+     * @param cDouble
+     * @return
+     */
+    public int cDoubleToJ(double cDouble) {
+        return WasmHelper.pushObject(ctx.getContext(), cDouble);
     }
 
     /**
