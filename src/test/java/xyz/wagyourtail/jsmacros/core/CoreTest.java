@@ -11,7 +11,6 @@ import xyz.wagyourtail.jsmacros.stubs.ProfileStub;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CoreTest {
-    @Language("wat")
     private final String TEST_SCRIPT = """
         (module
         (type $t0 (func (param i32 i32 i32)))
@@ -242,7 +241,59 @@ public class CoreTest {
         (global $__heap_base (export "__heap_base") i32 (i32.const 1048704))
         (data $.rodata (i32.const 1048576) "Hello World!\\00putString(Ljava/lang/String;Ljava/lang/String;)Zrp1\\00exec\\00rp2\\00accept(Ljava/lang/Object;Ljava/lang/Object;)Vrp3\\00"))
         """;
-    
+
+    @Language("rs")
+    private final String TEST_SCRIPT_SRC = """
+        mod Java {
+            #[link(wasm_import_module = "Java")]
+            extern "C" {
+                pub fn jStringToC(jPtr: u32, arr: *mut u32, len: u32);
+                pub fn cStringToJ(s: *const u8) -> u32;
+                pub fn getType(jPtr: u32) -> u32;
+                pub fn getJDouble(jPtr: u32) -> f64;
+                pub fn free(jPtr: u32);
+                pub fn invokeMethod(jPtr: u32, methodSig: *const u8, args: *const u32, len: u32) -> u32;
+                pub fn cIntToJ(i: i32) -> u32;
+                pub fn cLongToJ(l: i64) -> u32;
+                pub fn cFloatToJ(f: f32) -> u32;
+                pub fn cDoubleToJ(d: f64) -> u32;
+            }
+        }
+                
+        mod JavaWrapper {
+            #[link(wasm_import_module = "JavaWrapper")]
+            extern "C" {
+                pub fn methodToJava(method: *const u8) -> u32;
+                pub fn methodToJavaAsync(method: *const u8) -> u32;
+            }
+        }
+                
+        #[no_mangle]
+        pub unsafe fn exec(event: u32, jStr: u32) {
+            let mut k = [0; 64];
+            let v: u32 = b"Hello World!\\0".as_ptr() as u32;
+            Java::jStringToC(jStr, k.as_mut_ptr(), 64);
+            Java::invokeMethod(event, b"putString(Ljava/lang/String;Ljava/lang/String;)Z".as_ptr(), [k.as_ptr() as u32, v].as_ptr(), 2);
+        }
+                
+        #[no_mangle]
+        pub unsafe fn main(event: u32, file: u32, ctx: u32) {
+            let mut k: u32 = b"rp1\\0".as_ptr() as u32;
+            let v: u32 = b"Hello World!\\0".as_ptr() as u32;
+            Java::invokeMethod(event, b"putString(Ljava/lang/String;Ljava/lang/String;)Z".as_ptr(), [k, v].as_ptr(), 2);
+            let mut f: u32 = JavaWrapper::methodToJava(b"exec\\0".as_ptr());
+            k = Java::cStringToJ(b"rp2\\0".as_ptr());
+            Java::invokeMethod(f, b"accept(Ljava/lang/Object;Ljava/lang/Object;)V".as_ptr(), [event, k].as_ptr(), 2);
+            Java::free(k);
+            Java::free(f);
+            f = JavaWrapper::methodToJavaAsync(b"exec\\0".as_ptr());
+            k = Java::cStringToJ(b"rp3\\0".as_ptr());
+            Java::invokeMethod(f, b"accept(Ljava/lang/Object;Ljava/lang/Object;)V".as_ptr(), [event, k].as_ptr(), 2);
+            Java::free(k);
+            Java::free(f);
+        }
+        """;
+
     @Test
     public void test() throws InterruptedException {
         Core<ProfileStub, EventRegistryStub> core = CoreInstanceCreator.createCore();
